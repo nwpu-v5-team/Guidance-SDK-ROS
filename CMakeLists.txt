@@ -8,7 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
 )
-find_package(OpenCV 2 REQUIRED core highgui)
+# find_package(OpenCV 2 REQUIRED core highgui)
+find_package(OpenCV)
 
 catkin_package(
 )
@@ -38,12 +39,6 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "armv7l" )
 else ()
 endif ()
 
-link_libraries(
-  ${OpenCV_LIBS}
-  ${catkin_LIBRARIES}
-  DJI_guidance
-  usb-1.0
-  yaml-cpp)
 
 add_executable(guidanceNode
   src/GuidanceNode.cpp
@@ -56,4 +51,24 @@ add_executable(guidanceNodeCalibration
   src/GuidanceNodeCalibration.cpp
   src/DJI_utility.cpp)
 
+target_link_libraries(guidanceNode
+  ${OpenCV_LIBS}
+  ${catkin_LIBRARIES}
+  DJI_guidance
+  usb-1.0
+  yaml-cpp)
+
+target_link_libraries(guidanceNodeTest
+  ${OpenCV_LIBS}
+  ${catkin_LIBRARIES}
+  DJI_guidance
+  usb-1.0
+  yaml-cpp)
+
+target_link_libraries(guidanceNodeCalibration
+  ${OpenCV_LIBS}
+  ${catkin_LIBRARIES}
+  DJI_guidance
+  usb-1.0
+  yaml-cpp)
 #  vim: set et fenc=utf-8 ff=unix sts=0 sw=2 ts=2 :
