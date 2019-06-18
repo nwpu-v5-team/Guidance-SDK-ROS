@@ -35,27 +35,37 @@ private:
 #include <pthread.h>
 #include <semaphore.h>
 
-class DJI_lock
-{
-public:
-	DJI_lock();
-	~DJI_lock();
-	void         enter();
-	void         leave();
-private:
-	pthread_mutex_t m_lock;
-};
+namespace DJI_SDK {
 
-class DJI_event
-{
-public:
-	DJI_event();
-	~DJI_event();
-	int         set_event();
-	int         wait_event();
-private:
-	sem_t		m_sem;
-};
+    class DJI_lock {
+    public:
+        DJI_lock();
+
+        ~DJI_lock();
+
+        void enter();
+
+        void leave();
+
+    private:
+        pthread_mutex_t m_lock;
+    };
+
+    class DJI_event {
+    public:
+        DJI_event();
+
+        ~DJI_event();
+
+        int set_event();
+
+        int wait_event();
+
+    private:
+        sem_t m_sem;
+    };
+
+}
 
 #endif
 

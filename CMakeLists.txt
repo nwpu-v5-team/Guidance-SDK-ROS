@@ -40,6 +40,9 @@ else ()
 endif ()
 
 
+add_library(DJIGuidanceLib
+        src/DJIGuidanceROSHardware.cpp)
+
 add_executable(guidanceNode
   src/GuidanceNode.cpp
   src/DJI_utility.cpp)
