@@ -27,14 +27,19 @@ std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<
     public:
         DJIGuidanceROSHardware();
         virtual ~DJIGuidanceROSHardware();
+        int Prepare();
         int Run();
         int Release();
     protected:
     private:
 
         friend std::ostream& operator<<(std::ostream& out, e_sdk_err_code value); //TODO friend
-        int datastream_callback(int data_type, int data_len, char* content);
         int publish_images(e_vbus_index vbus_index, image_data* data);
+        int try_to_select_images(e_vbus_index vbus_index);
+
+        static int transfer_callback(int data_type, int data_len, char* content);
+        int datastream_callback(int data_type, int data_len, char* content);
+        static DJIGuidanceROSHardware* pThis;
 
         char key{};
         bool show_images;
@@ -66,6 +71,7 @@ std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<
 
         ros::NodeHandle nh;
         ros::Publisher body_velocity_pub;   // No angular velocity outputs.
+        ros::Publisher pose_pub;
         ros::Publisher global_odom_pub;     // No angular velocity outputs.
         ros::Publisher obstacles_dis_pub;
         ros::Publisher body_imu_pub;

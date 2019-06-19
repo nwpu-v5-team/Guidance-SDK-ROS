@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<launch>
+    <node pkg="guidance"
+          name="guidance_transfer_node"
+          type="guidance_transfer_node"
+          output="screen">
+        <param name="frame_id" value="guidance"/>
+        <param name="front_vbus1" value="true"/>
+        <param name="left_vbus2" value="true"/>
+        <param name="back_vbus3" value="true"/>
+        <param name="right_vbus4" value="true"/>
+        <param name="down_vbus5" value="true"/>
+    </node>
+</launch>
