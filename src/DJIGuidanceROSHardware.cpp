@@ -7,6 +7,7 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
 #include "DJIGuidanceROSHardware.h"
 
 using namespace vwpp;
@@ -29,7 +30,8 @@ DJIGuidanceROSHardware::DJIGuidanceROSHardware():
     back_vbus3(false),
     right_vbus4(false),
     down_vbus5(false),
-    nh(ros::NodeHandle("~"))
+    nh(ros::NodeHandle("~")),
+    frame_id("guidance")
 {
 
     this->node_name = ros::this_node::getName();
@@ -39,6 +41,16 @@ DJIGuidanceROSHardware::DJIGuidanceROSHardware():
     this->body_imu_pub = nh.advertise<sensor_msgs::Imu>("imu_data", 1);
     this->ultrasonic_dis_pub = nh.advertise<sensor_msgs::LaserScan>("ultrasonic_data", 1);
 
+
+    if (nh.hasParam("frame_id"))
+    {
+        nh.getParam("frame_id", this->frame_id);
+        ROS_INFO("Use frame_id: %s", this->frame_id.c_str());
+    }
+    else
+    {
+        ROS_INFO("Use default frame_id: %s", this->frame_id.c_str());
+    }
 
     // If not true, didn't creat the topic and send data.
     // Reduce the pressure of communication.
@@ -146,6 +158,36 @@ DJIGuidanceROSHardware::DJIGuidanceROSHardware():
     {
         ROS_WARN("%s, Default didn't use the down_vbus5", this->node_name.c_str());
     }
+
+    this->map_vbus_status.insert(std::make_pair(e_vbus_index::e_vbus1, front_vbus1));
+    this->map_vbus_status.insert(std::make_pair(e_vbus_index::e_vbus2, left_vbus2));
+    this->map_vbus_status.insert(std::make_pair(e_vbus_index::e_vbus3, back_vbus3));
+    this->map_vbus_status.insert(std::make_pair(e_vbus_index::e_vbus4, right_vbus4));
+    this->map_vbus_status.insert(std::make_pair(e_vbus_index::e_vbus5, down_vbus5));
+
+    this->map_vbus_leftpub.insert(std::make_pair(e_vbus_index::e_vbus1, front_greyscale_image_left_pub));
+    this->map_vbus_leftpub.insert(std::make_pair(e_vbus_index::e_vbus2, left_greyscale_image_left_pub));
+    this->map_vbus_leftpub.insert(std::make_pair(e_vbus_index::e_vbus3, back_greyscale_image_left_pub));
+    this->map_vbus_leftpub.insert(std::make_pair(e_vbus_index::e_vbus4, right_greyscale_image_left_pub));
+    this->map_vbus_leftpub.insert(std::make_pair(e_vbus_index::e_vbus5, down_greyscale_image_left_pub));
+
+    this->map_vbus_rightpub.insert(std::make_pair(e_vbus_index::e_vbus1, front_greyscale_image_right_pub));
+    this->map_vbus_rightpub.insert(std::make_pair(e_vbus_index::e_vbus2, left_greyscale_image_right_pub));
+    this->map_vbus_rightpub.insert(std::make_pair(e_vbus_index::e_vbus3, back_greyscale_image_right_pub));
+    this->map_vbus_rightpub.insert(std::make_pair(e_vbus_index::e_vbus4, right_greyscale_image_right_pub));
+    this->map_vbus_rightpub.insert(std::make_pair(e_vbus_index::e_vbus5, down_greyscale_image_right_pub));
+
+    this->map_vbus_depthpub.insert(std::make_pair(e_vbus_index::e_vbus1, front_depth_image_pub));
+    this->map_vbus_depthpub.insert(std::make_pair(e_vbus_index::e_vbus2, left_depth_image_pub));
+    this->map_vbus_depthpub.insert(std::make_pair(e_vbus_index::e_vbus3, back_depth_image_pub));
+    this->map_vbus_depthpub.insert(std::make_pair(e_vbus_index::e_vbus4, right_depth_image_pub));
+    this->map_vbus_depthpub.insert(std::make_pair(e_vbus_index::e_vbus5, down_depth_image_pub));
+
+    this->map_vbus_disparitypub.insert(std::make_pair(e_vbus_index::e_vbus1, front_disparity_image_pub));
+    this->map_vbus_disparitypub.insert(std::make_pair(e_vbus_index::e_vbus2, left_disparity_image_pub));
+    this->map_vbus_disparitypub.insert(std::make_pair(e_vbus_index::e_vbus3, back_disparity_image_pub));
+    this->map_vbus_disparitypub.insert(std::make_pair(e_vbus_index::e_vbus4, right_disparity_image_pub));
+    this->map_vbus_disparitypub.insert(std::make_pair(e_vbus_index::e_vbus5, down_disparity_image_pub));
 }
 
 
@@ -180,20 +222,120 @@ std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value)
 }
 
 
+int DJIGuidanceROSHardware::publish_images(e_vbus_index vbus_index, image_data* data)
+{
+    if (this->map_vbus_status.at(vbus_index))
+    {
+        // TODO Share the same greyscale field in class?
+        if (data->m_greyscale_image_left[vbus_index])
+        {
+            memcpy(this->greyscale_image_left.data, data->m_greyscale_image_left[vbus_index], IMAGE_SIZE);
+
+            // Publish left greyscale image.
+            cv_bridge::CvImage left_8;
+            this->greyscale_image_left.copyTo(left_8.image);
+            left_8.header.frame_id = this->frame_id;
+            left_8.header.stamp = ros::Time::now();
+            left_8.encoding = sensor_msgs::image_encodings::MONO8;
+            map_vbus_leftpub.at(vbus_index).publish(left_8.toImageMsg());
+        }
+
+        if (data->m_greyscale_image_right[vbus_index])
+        {
+            memcpy(this->greyscale_image_right.data, data->m_greyscale_image_right[vbus_index], IMAGE_SIZE);
+
+            // Publish right greyscale image.
+            cv_bridge::CvImage right_8;
+            this->greyscale_image_right.copyTo(right_8.image);
+            right_8.header.frame_id = this->frame_id;
+            right_8.header.stamp = ros::Time::now();
+            right_8.encoding = sensor_msgs::image_encodings::MONO8;
+            map_vbus_rightpub.at(vbus_index).publish(right_8.toImageMsg());
+        }
+
+        if (data->m_depth_image[vbus_index])
+        {
+            memcpy(this->depth16_image.data, data->m_depth_image[vbus_index], IMAGE_SIZE*2);
+
+            // Publish depth image.
+            cv_bridge::CvImage depth_16;
+            this->depth16_image.copyTo(depth_16.image);
+            depth_16.header.frame_id = this->frame_id;
+            depth_16.header.stamp = ros::Time::now();
+            depth_16.encoding = sensor_msgs::image_encodings::MONO16;
+            map_vbus_depthpub.at(vbus_index).publish(depth_16.toImageMsg());
+        }
+
+        if (data->m_disparity_image[vbus_index])
+        {
+            // TODO
+        }
+
+        // TODO
+        // key = waitKey(1);
+    }
+
+}
+
 
 int DJIGuidanceROSHardware::datastream_callback(int data_type, int data_len, char *content)
 {
     dji_lock.enter();
 
+    // If velocity data
+    if (e_guidance_event::e_velocity == data_type && content != nullptr)
+    {
+        auto* velocity_data = (velocity*)content;
+
+        geometry_msgs::TwistStamped vo_msg;
+        // vo_msg.header.seq
+        vo_msg.header.frame_id = this->frame_id;
+        vo_msg.header.stamp = ros::Time::now();
+        vo_msg.twist.linear.x = 0.001f * velocity_data->vx;
+        vo_msg.twist.linear.y = 0.001f * velocity_data->vy;
+        vo_msg.twist.linear.z = 0.001f * velocity_data->vz;
+        // vo_msg.twist.angular
+        this->body_velocity_pub.publish(vo_msg);
+    }
+
+    // If motion data
+    if (e_guidance_event::e_motion == data_type && content != nullptr)
+    {
+        // TODO NEXT
+    }
 
     // If Image data
     if (e_guidance_event::e_image == data_type && content != nullptr)
     {
         auto* data = (image_data*)content;
 
-        // TODO Next 2019-6-18-23:22
-        // if (data->m_greyscale_image_left[])
+        publish_images(e_vbus_index::e_vbus1, data);
+        publish_images(e_vbus_index::e_vbus2, data);
+        publish_images(e_vbus_index::e_vbus3, data);
+        publish_images(e_vbus_index::e_vbus4, data);
+        publish_images(e_vbus_index::e_vbus5, data);
     }
+
+    // If IMU data
+    if (e_guidance_event::e_imu == data_type && content != nullptr)
+    {
+        imu* body_imu_data = (imu*)content;
+
+        // Publish IMU data
+        sensor_msgs::Imu imu_msg;
+        // imu_msg.header.seq
+        imu_msg.header.frame_id = this->frame_id;
+        imu_msg.header.stamp = ros::Time::now();
+        imu_msg.linear_acceleration.x = body_imu_data->acc_x;
+        imu_msg.linear_acceleration.y = body_imu_data->acc_y;
+        imu_msg.linear_acceleration.z = body_imu_data->acc_z;
+        imu_msg.orientation.w = body_imu_data->q[0];
+        imu_msg.orientation.x = body_imu_data->q[1];
+        imu_msg.orientation.y = body_imu_data->q[2];
+        imu_msg.orientation.z = body_imu_data->q[3];
+        this->body_imu_pub.publish(imu_msg);
+    }
+
 
     return 0;
 }

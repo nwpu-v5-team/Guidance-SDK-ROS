@@ -34,6 +34,7 @@ std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<
 
         friend std::ostream& operator<<(std::ostream& out, e_sdk_err_code value); //TODO friend
         int datastream_callback(int data_type, int data_len, char* content);
+        int publish_images(e_vbus_index vbus_index, image_data* data);
 
         char key{};
         bool show_images;
@@ -47,18 +48,21 @@ std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<
         cv::Mat greyscale_image_left;
         cv::Mat greyscale_image_right;
 
-        cv::Mat depth16_image;              //TODO Why these two variables?
-        cv::Mat depth8_image;
+        cv::Mat depth16_image;
+        // cv::Mat depth8_image;
 
         cv::Mat disparity_image;
 
         std::string node_name;
+        std::string frame_id;
 
         bool front_vbus1;
         bool left_vbus2;
         bool back_vbus3;
         bool right_vbus4;
         bool down_vbus5;
+
+        std::map<e_vbus_index, bool> map_vbus_status;
 
         ros::NodeHandle nh;
         ros::Publisher body_velocity_pub;   // No angular velocity outputs.
@@ -67,6 +71,7 @@ std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<
         ros::Publisher body_imu_pub;
         ros::Publisher ultrasonic_dis_pub;
 
+        // TODO put the pubs in a struct!
         ros::Publisher front_greyscale_image_left_pub;
         ros::Publisher front_greyscale_image_right_pub;
         ros::Publisher front_depth_image_pub;
@@ -91,6 +96,12 @@ std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<
         ros::Publisher down_greyscale_image_right_pub;
         ros::Publisher down_depth_image_pub;
         ros::Publisher down_disparity_image_pub;
+
+        std::map<e_vbus_index, ros::Publisher> map_vbus_leftpub;
+        std::map<e_vbus_index, ros::Publisher> map_vbus_rightpub;
+        std::map<e_vbus_index, ros::Publisher> map_vbus_depthpub;
+        std::map<e_vbus_index, ros::Publisher> map_vbus_disparitypub;
+
     };
 
 }
