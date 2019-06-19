@@ -35,6 +35,7 @@ ros::Publisher cam_info_left_pub; // camera info msg publishers
 ros::Publisher cam_info_right_pub;
 
 using namespace cv;
+using namespace DJI_SDK;
 
 #define WIDTH 320
 #define HEIGHT 240
