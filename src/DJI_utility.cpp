@@ -1,4 +1,5 @@
 #include "DJI_utility.h"
+using namespace DJI_SDK;
 
 #ifdef WIN32
 

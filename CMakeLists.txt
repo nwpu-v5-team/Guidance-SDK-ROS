@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(guidance)
 
+add_definitions(-std=c++11)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
@@ -40,30 +42,33 @@ else ()
 endif ()
 
 
-add_executable(guidanceNode
-  src/GuidanceNode.cpp
-  src/DJI_utility.cpp)
+add_executable(guidance_transfer_node
+        src/DJIGuidanceROSHardware.cpp
+        src/guidance_transfer_node.cpp
+        src/DJI_utility.cpp)
+# add_executable(guidanceNode
+#   src/GuidanceNode.cpp
+#   src/DJI_utility.cpp)
 
-add_executable(guidanceNodeTest
-  src/GuidanceNodeTest.cpp)
+# add_executable(guidanceNodeTest
+#   src/GuidanceNodeTest.cpp)
+target_link_libraries(guidance_transfer_node
+  ${OpenCV_LIBS}
+  ${catkin_LIBRARIES}
+  DJI_guidance
+  usb-1.0
+  yaml-cpp)
+
+# target_link_libraries(guidanceNodeTest
+#   ${OpenCV_LIBS}
+#   ${catkin_LIBRARIES}
+#   DJI_guidance
+#   usb-1.0
+#   yaml-cpp)
 
 add_executable(guidanceNodeCalibration
-  src/GuidanceNodeCalibration.cpp
-  src/DJI_utility.cpp)
-
-target_link_libraries(guidanceNode
-  ${OpenCV_LIBS}
-  ${catkin_LIBRARIES}
-  DJI_guidance
-  usb-1.0
-  yaml-cpp)
-
-target_link_libraries(guidanceNodeTest
-  ${OpenCV_LIBS}
-  ${catkin_LIBRARIES}
-  DJI_guidance
-  usb-1.0
-  yaml-cpp)
+        src/GuidanceNodeCalibration.cpp
+        src/DJI_utility.cpp)
 
 target_link_libraries(guidanceNodeCalibration
   ${OpenCV_LIBS}
