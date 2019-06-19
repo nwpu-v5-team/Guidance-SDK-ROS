@@ -311,9 +311,9 @@ int DJIGuidanceROSHardware::datastream_callback(int data_type, int data_len, cha
         // vo_msg.header.seq
         vo_msg.header.frame_id = this->frame_id;
         vo_msg.header.stamp = ros::Time::now();
-        vo_msg.vector.x = velocity_data->vx;
-        vo_msg.vector.y = velocity_data->vy;
-        vo_msg.vector.z = velocity_data->vz;
+        vo_msg.vector.x = 0.001f * velocity_data->vx;
+        vo_msg.vector.y = 0.001f * velocity_data->vy;
+        vo_msg.vector.z = 0.001f * velocity_data->vz;
         this->body_velocity_pub.publish(vo_msg);
     }
 

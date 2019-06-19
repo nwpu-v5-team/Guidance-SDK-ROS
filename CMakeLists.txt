@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(guidance)
 
+add_definitions(-std=c++11)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
@@ -40,11 +42,10 @@ else ()
 endif ()
 
 
-add_library(DJIGuidanceROSLib
-        src/DJIGuidanceROSHardware.cpp)
-
 add_executable(guidance_transfer_node
-        src/guidance_transfer_node.cpp)
+        src/DJIGuidanceROSHardware.cpp
+        src/guidance_transfer_node.cpp
+        src/DJI_utility.cpp)
 # add_executable(guidanceNode
 #   src/GuidanceNode.cpp
 #   src/DJI_utility.cpp)
@@ -54,7 +55,6 @@ add_executable(guidance_transfer_node
 target_link_libraries(guidance_transfer_node
   ${OpenCV_LIBS}
   ${catkin_LIBRARIES}
-  DJIGuidanceROSLib
   DJI_guidance
   usb-1.0
   yaml-cpp)
